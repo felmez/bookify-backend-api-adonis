@@ -7,13 +7,43 @@ export default class BookmarksController {
   public async index({ auth, request }: HttpContextContract) {
     const { page = 1, limit = 10 } = request.qs()
 
-    // TODO preload some basic book info on query from google api
     const bookmarks = await Bookmark.query()
       .where({ userId: auth.user?.id })
-      .preload('user')
+      .orderBy('id')
       .paginate(page, limit)
 
-    return bookmarks
+    const service = new GoogleAPIService()
+
+    const bookmarksWithBookDetails = await Promise.all(
+      bookmarks.map(async (bookmark) => {
+        try {
+          const book = await service.getBookById(bookmark.bookId)
+
+          return {
+            ...bookmark.$attributes,
+            title: book.volumeInfo?.title,
+            authors: book.volumeInfo?.authors,
+            description: book.volumeInfo?.description,
+          }
+        } catch (error) {
+          console.error(`Error fetching details for bookmark ${bookmark.id}:`, error)
+          return null
+        }
+      })
+    )
+
+    return {
+      data: bookmarksWithBookDetails,
+      meta: {
+        total: bookmarks.total,
+        per_page: bookmarks.perPage,
+        current_page: bookmarks.currentPage,
+        last_page: bookmarks.lastPage,
+        first_page: bookmarks.firstPage,
+        next_page_url: bookmarks.getNextPageUrl(),
+        previous_page_url: bookmarks.getPreviousPageUrl(),
+      },
+    }
   }
 
   public async store({ request, auth }: HttpContextContract) {

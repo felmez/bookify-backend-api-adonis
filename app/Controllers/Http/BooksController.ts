@@ -7,6 +7,8 @@ export default class BooksController {
 
     const startIndex = (page - 1) * limit
 
+    // TODO add separate author, title search if enough time
+
     const service = new GoogleAPIService()
     const data = await service.searchBooks(text, startIndex, limit)
 
