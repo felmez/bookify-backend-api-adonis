@@ -13,4 +13,10 @@ export class GoogleAPIService {
 
     return response.data
   }
+
+  public async getBookById(bookId: string) {
+    const response = await this.client.volumes.get({ volumeId: bookId })
+
+    return response.data
+  }
 }
