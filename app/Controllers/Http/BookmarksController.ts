@@ -32,8 +32,12 @@ export default class BookmarksController {
           ? 'Book has been added to your bookmark list'
           : 'Book is already on your bookmark list',
       }
-    } catch {
-      throw new Exception('Book is not found', 404)
+    } catch (error) {
+      if (error.sqlMessage) {
+        throw new Exception(error.sqlMessage, 422)
+      } else {
+        throw new Exception('Book is not found', 404)
+      }
     }
   }
 
